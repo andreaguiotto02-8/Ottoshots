@@ -45,6 +45,7 @@ label.f input{font-weight:500;color:var(--fg)}
 .sec2{background:var(--surface2);border:0;border-radius:16px;min-height:52px;padding:4px 14px;font-weight:600}
 .ghost{background:transparent;border:0;color:var(--muted);min-height:44px;padding:0 8px;font-weight:600}
 .btns{display:flex;gap:8px;margin-top:14px}.btns>*{flex:1}
+.chips{display:flex;gap:6px;overflow-x:auto;padding:2px 0 12px;scrollbar-width:none}.chip{flex:0 0 auto;min-width:38px;height:38px;border-radius:19px;border:0;background:var(--surface2);font-weight:600}.chip.ok{box-shadow:inset 0 0 0 2px var(--accent)}.chip.cur{background:var(--accent);color:#fff}.sum[data-q]{cursor:pointer}
 .item{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:16px;margin-bottom:10px;background:var(--surface);border:1px solid var(--line);border-radius:18px;cursor:pointer}
 .item.fatta{opacity:.55;cursor:default}
 .item b{display:block}.item span.s{font-size:13px;color:var(--muted)}
@@ -111,7 +112,7 @@ nav{position:fixed;left:0;right:0;bottom:0;background:var(--surface);border-top:
 <div id="lb"><img alt=""></div>
 <script>
 'use strict';
-const APP_V='2.2';
+const APP_V='2.3';
 const DEF_REPO='andreaguiotto02-8/ottoshots-data';
 const $=s=>document.querySelector(s), main=$('#main');
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -203,6 +204,7 @@ function vCard(){
   const x=S.open,q=x.domande[S.idx],k=kk(q,S.idx),op=opz(q),r=S.risp[k]||{};
   const tutte=x.domande.every(d=>d.consigliata);
   let h='<div style="display:flex;justify-content:space-between;align-items:center"><button class="ghost" data-act="esci">← Indietro</button><span class="meta">'+(S.idx+1)+' di '+x.domande.length+'</span></div><div class="prog"><i style="width:'+(S.idx/x.domande.length*100)+'%"></i></div>';
+  h+='<div class="chips">'+x.domande.map((d,i)=>{const rr=S.risp[kk(d,i)]||{};return '<button class="chip'+(i===S.idx?' cur':'')+(rr.v?' ok':'')+'" data-q="'+i+'">'+(i+1)+'</button>'}).join('')+'</div>';
   if(S.idx===0&&x.intro)h+='<p class="det">'+esc(x.intro)+'</p>';
   if(S.idx===0&&tutte)h+='<button class="sec2" style="width:100%;margin-bottom:12px" data-act="cons">⚡ Accetta tutti i consigli</button>';
   h+='<div class="stepcard"><div class="kick">Domanda '+(S.idx+1)+'</div><h2>'+esc(q.testo)+'</h2>'+(q.dettaglio?'<p class="det">'+esc(q.dettaglio)+'</p>':'');
@@ -210,7 +212,7 @@ function vCard(){
   op.forEach((o,j)=>{h+='<button class="opt'+(r.v===o?' sel':'')+'" data-opt="'+j+'">'+(q.consigliata===o?'<span class="cons">consigliata</span>':'')+esc(o)+'</button>'});
   if(q.tipo==='testo'||!op.length)h+='<textarea id="tx" placeholder="Scrivi qui la risposta">'+esc(r.v||'')+'</textarea>';
   else h+='<textarea id="cm" placeholder="Commento (facoltativo)">'+esc(r.c||'')+'</textarea>';
-  h+='<div class="btns"><button class="sec2" data-act="nonso">Non so</button><button class="pri" id="av" data-act="avanti">'+(S.idx===x.domande.length-1?'Controlla':'Avanti')+'</button></div></div>';
+  h+='<div class="btns"><button class="sec2" data-act="nonso">Non so</button><button class="sec2" data-act="salta">Salta</button><button class="pri" id="av" data-act="avanti">'+(S.idx===x.domande.length-1?'Controlla':'Avanti')+'</button></div></div>';
   main.innerHTML=h;aggAv();caricaImg();
 }
 function curK(){const q=S.open.domande[S.idx];return kk(q,S.idx)}
@@ -219,7 +221,7 @@ function aggAv(){const b=$('#av');if(!b)return;const r=S.risp[curK()]||{},tx=$('
 function passa(){if(S.idx<S.open.domande.length-1){S.idx++;render()}else{S.fase='riep';render()}}
 function vRiep(){
   const x=S.open;let h='<button class="ghost" data-act="indietro">← Indietro</button><h2 style="margin-top:6px">Controlla e invia</h2><p class="meta">Quando premi Invia, le risposte arrivano al sistema.</p>';
-  x.domande.forEach((q,i)=>{const r=S.risp[kk(q,i)]||{};h+='<div class="sum"><span>'+(i+1)+'. '+esc(q.testo)+'</span><b>'+esc(r.v||'—')+'</b>'+(r.c?'<span>“'+esc(r.c)+'”</span>':'')+'</div>'});
+  x.domande.forEach((q,i)=>{const r=S.risp[kk(q,i)]||{};h+='<div class="sum" data-q="'+i+'"><span>'+(i+1)+'. '+esc(q.testo)+'</span><b>'+esc(r.v||'—')+'</b>'+(r.c?'<span>“'+esc(r.c)+'”</span>':'')+'</div>'});
   main.innerHTML=banner()+h+'<div class="btns"><button class="pri" id="inv" data-act="invia">Invia le risposte</button></div>';
 }
 async function invia(){
@@ -280,7 +282,8 @@ document.addEventListener('click',e=>{
   if(e.target.closest('#lb')){$('#lb').classList.remove('on');return}
   const z=e.target.closest('[data-zoom]');if(z){e.stopPropagation();const p=S.open.domande[S.idx].foto[+z.dataset.zoom];imgUrl(p).then(u=>{if(u){$('#lb img').src=u;$('#lb').classList.add('on')}});return}
   const fo=e.target.closest('[data-fi]');if(fo&&S.open&&S.open.domande[S.idx].tipo==='foto'&&S.open.domande[S.idx].foto.length>1){salva();const q=S.open.domande[S.idx],i=+fo.dataset.fi;S.risp[curK()].fi=i;S.risp[curK()].v='Foto '+(i+1)+' ('+bn(q.foto[i])+')';render();return}
-  const t=e.target.closest('[data-tab],[data-go],[data-open],[data-opt],[data-act],[data-anno]');if(!t)return;
+  const t=e.target.closest('[data-tab],[data-go],[data-open],[data-opt],[data-act],[data-anno],[data-q]');if(!t)return;
+  if(t.dataset.q!==undefined){if(S.fase==='dom')salva();S.idx=+t.dataset.q;S.fase='dom';render();return}
   if(t.dataset.tab){S.tab=t.dataset.tab;if(S.tab==='dom'&&S.fase!=='lista'&&S.fase!=='ok'){}else if(S.fase==='ok')S.fase='lista';render();return}
   if(t.dataset.anno){S.altAnno=S.altAnno===t.dataset.anno?null:t.dataset.anno;render();return}
   if(t.dataset.go){S.tab=t.dataset.go;render();return}
@@ -292,6 +295,7 @@ document.addEventListener('click',e=>{
   else if(a==='indietro'){S.fase='dom';S.idx=S.open.domande.length-1;render()}
   else if(a==='nonso'){salva();S.risp[curK()].v='Non so';passa()}
   else if(a==='avanti'){salva();passa()}
+  else if(a==='salta'){salva();passa()}
   else if(a==='cons'){S.open.domande.forEach((q,i)=>{S.risp[kk(q,i)]={v:q.consigliata,c:S.risp[kk(q,i)]?.c||''}});S.fase='riep';render()}
   else if(a==='invia')invia();
   else if(a==='salvacfg')salvaCfg();
