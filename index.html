@@ -102,6 +102,7 @@ nav{position:fixed;left:0;right:0;bottom:0;background:var(--surface);border-top:
 </div>
 <nav aria-label="Sezioni">
   <button class="tab" data-tab="dom"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/></svg><span>Domande</span></button>
+  <button class="tab" data-tab="alb"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg><span>Album</span></button>
   <button class="tab" data-tab="oggi"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span>Oggi</span></button>
   <button class="tab" data-tab="imp"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></svg><span>Impostazioni</span></button>
 </nav>
@@ -109,7 +110,7 @@ nav{position:fixed;left:0;right:0;bottom:0;background:var(--surface);border-top:
 <div id="lb"><img alt=""></div>
 <script>
 'use strict';
-const APP_V='2.0';
+const APP_V='2.1';
 const DEF_REPO='andreaguiotto02-8/ottoshots-data';
 const $=s=>document.querySelector(s), main=$('#main');
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -122,7 +123,7 @@ function applyTema(){const t=store.get('tema')||'auto';const r=document.document
 async function imgUrl(p){if(IMG[p])return IMG[p];const c=cfg();if(!c)return null;try{const r=await fetch('https://api.github.com/repos/'+c.repo+'/contents/'+p,{headers:{Authorization:'Bearer '+c.token,Accept:'application/vnd.github.raw'},cache:'no-store'});if(!r.ok)return null;return IMG[p]=URL.createObjectURL(await r.blob())}catch(e){return null}}
 function caricaImg(){document.querySelectorAll('img[data-p]').forEach(async im=>{const u=await imgUrl(im.dataset.p);if(u)im.src=u;else im.alt='Anteprima non disponibile'})}
 const bn=p=>String(p).split('/').pop();
-let S={tab:'dom',dom:[],stato:null,err:'',busy:false,open:null,idx:0,risp:{},fase:'lista',agg:null};
+let S={tab:'dom',dom:[],stato:null,alb:null,err:'',busy:false,open:null,idx:0,risp:{},fase:'lista',agg:null};
 
 function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('on');clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.remove('on'),1800)}
 const cfg=()=>{const c=store.get('cfg');return c&&c.token&&c.repo?c:null};
@@ -158,23 +159,30 @@ async function carica(quiet){
       const d=await leggiJson('domande/'+f.name); if(!d||!Array.isArray(d.domande))continue;
       L.push({n,titolo:d.titolo||('Richiesta '+n),intro:d.intro||'',domande:d.domande,creata:d.creata||'',fatta:!!fatte[n]})}
     L.sort((a,b)=>b.n.localeCompare(a.n)); S.dom=L;
-    S.stato=await leggiJson('stato.json'); S.err=''; S.agg=new Date().toISOString();
-    store.set('cache',{dom:L,stato:S.stato,agg:S.agg});
+    S.stato=await leggiJson('stato.json'); S.alb=await leggiJson('album.json'); S.err=''; S.agg=new Date().toISOString();
+    store.set('cache',{dom:L,stato:S.stato,alb:S.alb,agg:S.agg});
   }catch(e){
     S.err=e.message==='Failed to fetch'?'Non riesco a collegarmi. Controlla la connessione.':e.message;
-    const ch=store.get('cache'); if(ch&&!S.dom.length){S.dom=ch.dom||[];S.stato=ch.stato||null;S.agg=ch.agg}
+    const ch=store.get('cache'); if(ch&&!S.dom.length){S.dom=ch.dom||[];S.stato=ch.stato||null;S.alb=ch.alb||null;S.agg=ch.agg}
   }
   S.busy=false; render();
 }
 
-function badge(){const n=S.dom.filter(x=>!x.fatta).length;document.querySelectorAll('.tab').forEach(t=>{t.querySelector('.bd')?.remove();if(t.dataset.tab==='dom'&&n){const b=document.createElement('i');b.className='bd';b.style.fontStyle='normal';b.textContent=n;t.appendChild(b)}})}
+function badge(){const al=salute().length;document.querySelectorAll('.tab').forEach(t=>{if(t.dataset.tab==='oggi'){t.querySelector('.bd2')?.remove();if(al){const b=document.createElement('i');b.className='bd';b.classList.add('bd2');b.style.cssText='font-style:normal;background:var(--bad);color:#fff';b.textContent='!';t.appendChild(b)}}});const n=S.dom.filter(x=>!x.fatta).length;document.querySelectorAll('.tab').forEach(t=>{t.querySelector('.bd')?.remove();if(t.dataset.tab==='dom'&&n){const b=document.createElement('i');b.className='bd';b.style.fontStyle='normal';b.textContent=n;t.appendChild(b)}})}
 function render(){
   document.querySelectorAll('.tab').forEach(t=>{t.setAttribute('aria-current',t.dataset.tab===S.tab?'page':'false')});
   $('#ver').textContent='v'+APP_V; badge();
   if(!cfg()&&S.tab!=='imp'){main.innerHTML='<div class="card"><h2>Prima di iniziare</h2><p>Per collegare l\'app al sistema serve la chiave di accesso. La inserisci una volta sola in Impostazioni.</p><div class="btns"><button class="pri" data-go="imp">Vai a Impostazioni</button></div></div>';return}
-  if(S.tab==='dom') vDom(); else if(S.tab==='oggi') vOggi(); else vImp();
+  if(S.tab==='dom') vDom(); else if(S.tab==='alb') vAlb(); else if(S.tab==='oggi') vOggi(); else vImp();
 }
-const banner=()=>S.err?'<div class="banner">'+esc(S.err)+'</div>':'';
+function ore(t){const m=(Date.now()-new Date(t).getTime())/60000;return isNaN(m)?null:m}
+function oreTxt(m){return m<90?Math.round(m)+' minuti':m<60*36?Math.round(m/60)+' ore':Math.round(m/1440)+' giorni'}
+function salute(){const st=S.stato,a=[];if(!st)return a;
+  const c=st.cloud_ultimo_giro?ore(st.cloud_ultimo_giro):null;if(c!=null&&c>150)a.push('Il controllo automatico di Claude non si fa sentire da '+oreTxt(c)+'.');
+  const p=st.attesa_pc_da?ore(st.attesa_pc_da):null;if(p!=null&&p>180)a.push('Il PC non risponde da '+oreTxt(p)+'. Controlla che sia acceso e collegato.');
+  if(st.sincronizzazione&&st.sincronizzazione.ok===false)a.push('Problema di sincronizzazione tra telefono e PC'+(st.sincronizzazione.nota?': '+st.sincronizzazione.nota:'.'));
+  (st.problemi||[]).forEach(x=>a.push(x));return a}
+const banner=()=>{let h=S.err?'<div class="banner">'+esc(S.err)+'</div>':'';const sa=salute();if(sa.length)h+='<div class="banner" style="border-color:var(--bad);background:color-mix(in srgb,var(--bad) 14%,var(--surface))"><b style="color:var(--bad)">Attenzione</b><br>'+sa.map(esc).join('<br>')+'</div>';return h}
 const agg=()=>S.agg?'<p class="meta" style="text-align:center;margin-top:12px">Aggiornato alle '+esc(fh(S.agg))+'</p>':'';
 
 /* ---------- Domande ---------- */
@@ -221,6 +229,20 @@ async function invia(){
 }
 function vOk(){main.innerHTML='<div class="empty" style="border-style:solid"><div class="big">🎉</div><b>Risposte inviate</b>Non devi fare altro: il sistema le legge da solo.<div class="btns"><button class="pri" data-act="esci">Torna alle domande</button></div></div>'}
 
+/* ---------- Album ---------- */
+function vAlb(){
+  let h=banner()+'<div style="display:flex;justify-content:space-between;align-items:center"><div class="sech" style="margin:0">Album: come verrà riordinato</div><button class="ghost" data-act="ref">'+(S.busy?'Aggiorno…':'↻ Aggiorna')+'</button></div>';
+  const a=S.alb;
+  if(!a||!Array.isArray(a.cartelle)||!a.cartelle.length){main.innerHTML=h+'<div class="empty"><b>Elenco non ancora pronto</b>Compare qui appena il PC prepara l\'elenco delle cartelle.</div>'+agg();return}
+  const tot=a.cartelle.reduce((n,c)=>n+(+c.foto||0),0),prov=a.cartelle.filter(c=>c.provvisorio).length;
+  h+='<div class="card"><div class="now"><div><div style="font-size:24px;font-weight:800">'+a.cartelle.length+'</div><div class="meta">cartelle</div></div><div style="margin-left:18px"><div style="font-size:24px;font-weight:800">'+tot+'</div><div class="meta">foto</div></div>'+(prov?'<div style="margin-left:18px"><div style="font-size:24px;font-weight:800;color:var(--accent2)">'+prov+'</div><div class="meta">da nominare</div></div>':'')+'</div></div>';
+  const by={};a.cartelle.forEach(c=>{(by[c.anno||'Senza anno']=by[c.anno||'Senza anno']||[]).push(c)});
+  Object.keys(by).sort().reverse().forEach(y=>{const L=by[y],n=L.reduce((m,c)=>m+(+c.foto||0),0),open=S.altAnno===y;
+    h+='<div class="item" data-anno="'+esc(y)+'"><div><b>'+esc(y)+'</b><span class="s">'+L.length+' cartelle · '+n+' foto</span></div><div class="meta">'+(open?'▲':'▼')+'</div></div>';
+    if(open)L.forEach(c=>{h+='<div class="sum" style="margin-left:10px"><b>'+esc(c.nome)+(c.provvisorio?' <span style="color:var(--accent2);font-size:12px">· da nominare</span>':'')+'</b><span>'+(+c.foto||0)+' foto'+(c.raw?' · '+c.raw+' RAW':'')+(c.origine?' · da '+esc(c.origine):'')+'</span></div>'})});
+  main.innerHTML=h+agg();
+}
+
 /* ---------- Oggi ---------- */
 function vOggi(){
   const st=S.stato;let h=banner();
@@ -229,7 +251,6 @@ function vOggi(){
   h+='<div class="card"><div class="kick">Ora</div><div class="now" style="margin-top:6px"><span class="pulse"></span><div style="font-size:17px;font-weight:600">'+esc(st.ora||'Nessuna attività in corso')+'</div></div></div>';
   if(st.devi_fare&&st.devi_fare.length)h+='<div class="card"><div class="kick">Cosa devi fare tu</div><p style="margin:6px 0 0;font-size:16px;font-weight:600">'+st.devi_fare.map(esc).join('<br>')+'</p></div>';
   else h+='<div class="card"><div class="kick">Cosa devi fare tu</div><p style="margin:6px 0 0;font-size:16px;font-weight:600">Niente, va tutto da solo.</p></div>';
-  if(st.problemi&&st.problemi.length)h+='<div class="card" style="border-left-color:var(--bad)"><div class="kick" style="color:var(--bad)">Cosa è andato storto</div><p style="margin:6px 0 0">'+st.problemi.map(esc).join('<br>')+'</p></div>';
   if(st.oggi&&st.oggi.length){h+='<div class="sech" style="margin-top:6px">Riepilogo di oggi</div><div class="plist">';st.oggi.forEach(e=>{h+='<div class="pl'+(e.problema?' bad':'')+'"><div class="h">'+esc(e.ora||'')+'</div>'+esc(e.testo)+'</div>'});h+='</div>'}
   if(st.prossimo)h+='<div class="card" style="margin-top:14px"><div class="kick">Prossimo passo</div><p style="margin:6px 0 0">'+esc(st.prossimo)+'</p></div>';
   main.innerHTML=h+(st.aggiornato?'<p class="meta" style="text-align:center;margin-top:12px">Stato del sistema: '+esc(fdt(st.aggiornato))+'</p>':'')+agg();
@@ -258,8 +279,9 @@ document.addEventListener('click',e=>{
   if(e.target.closest('#lb')){$('#lb').classList.remove('on');return}
   const z=e.target.closest('[data-zoom]');if(z){e.stopPropagation();const p=S.open.domande[S.idx].foto[+z.dataset.zoom];imgUrl(p).then(u=>{if(u){$('#lb img').src=u;$('#lb').classList.add('on')}});return}
   const fo=e.target.closest('[data-fi]');if(fo&&S.open&&S.open.domande[S.idx].foto.length>1){salva();const q=S.open.domande[S.idx],i=+fo.dataset.fi;S.risp[curK()].fi=i;S.risp[curK()].v='Foto '+(i+1)+' ('+bn(q.foto[i])+')';render();return}
-  const t=e.target.closest('[data-tab],[data-go],[data-open],[data-opt],[data-act]');if(!t)return;
+  const t=e.target.closest('[data-tab],[data-go],[data-open],[data-opt],[data-act],[data-anno]');if(!t)return;
   if(t.dataset.tab){S.tab=t.dataset.tab;if(S.tab==='dom'&&S.fase!=='lista'&&S.fase!=='ok'){}else if(S.fase==='ok')S.fase='lista';render();return}
+  if(t.dataset.anno){S.altAnno=S.altAnno===t.dataset.anno?null:t.dataset.anno;render();return}
   if(t.dataset.go){S.tab=t.dataset.go;render();return}
   if(t.dataset.open){apri(t.dataset.open);return}
   if(t.dataset.opt!==undefined){salva();S.risp[curK()].v=opz(S.open.domande[S.idx])[+t.dataset.opt];delete S.risp[curK()].fi;render();return}
@@ -278,7 +300,7 @@ document.addEventListener('click',e=>{
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&cfg()&&S.fase==='lista')carica(true)});
 setInterval(()=>{if(!document.hidden&&cfg()&&S.fase==='lista'&&S.tab!=='imp')carica(true)},120000);
 if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
-const ch=store.get('cache');if(ch){S.dom=ch.dom||[];S.stato=ch.stato||null;S.agg=ch.agg||null}
+const ch=store.get('cache');if(ch){S.dom=ch.dom||[];S.stato=ch.stato||null;S.alb=ch.alb||null;S.agg=ch.agg||null}
 applyTema();S.tab=cfg()?'dom':'imp';render();if(cfg())carica(true);
 </script>
 </body>
