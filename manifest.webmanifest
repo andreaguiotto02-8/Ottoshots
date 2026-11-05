@@ -1,10 +1,10 @@
 {
-  "id": "/Ottoshots/app",
+  "id": "/Ottoshots/",
   "name": "Ottoshots",
   "short_name": "Ottoshots",
   "description": "Domande e stato del sistema che ordina le tue foto",
-  "start_url": "./",
-  "scope": "./",
+  "start_url": "/Ottoshots/",
+  "scope": "/Ottoshots/",
   "display": "standalone",
   "background_color": "#0f1012",
   "theme_color": "#0f1012",
