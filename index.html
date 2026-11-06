@@ -112,7 +112,7 @@ nav{position:fixed;left:0;right:0;bottom:0;background:var(--surface);border-top:
 <div id="lb"><img alt=""></div>
 <script>
 'use strict';
-const APP_V='2.5';
+const APP_V='2.6';
 const DEF_REPO='andreaguiotto02-8/ottoshots-data';
 const $=s=>document.querySelector(s), main=$('#main');
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -160,7 +160,7 @@ async function carica(quiet){
     const L=[];
     for(const f of (ld||[])){const n=num(f.name);if(!n)continue;
       const d=await leggiJson('domande/'+f.name); if(!d||!Array.isArray(d.domande))continue;
-      L.push({n,titolo:d.titolo||('Richiesta '+n),intro:d.intro||'',domande:d.domande,creata:d.creata||'',rem:remAll[n]||{},fatta:d.domande.length>0&&d.domande.every((q,i)=>{const o=(remAll[n]||{})[String(q.id||i+1)];return !!(o&&o.risposta)})})}
+      L.push({n,titolo:d.titolo||('Richiesta '+n),intro:d.intro||'',domande:d.domande,creata:d.creata||'',rem:remAll[n]||{},fatta:d.domande.length>0&&d.domande.every((q,i)=>{const o=(remAll[n]||{})[String(q.id||i+1)];return !!(o&&(o.risposta||o.commento))})})}
     L.sort((a,b)=>b.n.localeCompare(a.n)); S.dom=L;
     S.stato=await leggiJson('stato.json'); S.alb=await leggiJson('album.json'); S.err=''; S.agg=new Date().toISOString();
     store.set('cache',{dom:L,stato:S.stato,alb:S.alb,agg:S.agg});
@@ -194,7 +194,7 @@ function vDom(){
   const ap=S.dom.filter(x=>!x.fatta),ch=S.dom.filter(x=>x.fatta);let h=banner();
   h+='<div style="display:flex;justify-content:space-between;align-items:center"><div class="sech" style="margin:0">Da rispondere</div><button class="ghost" data-act="ref">'+(S.busy?'Aggiorno…':'↻ Aggiorna')+'</button></div>';
   if(!ap.length) h+='<div class="empty"><div class="big">✅</div><b>Niente da rispondere</b>Quando il sistema ha domande nuove le trovi qui e ti arriva una notifica.</div>';
-  else ap.forEach(x=>{h+='<div class="item" data-open="'+esc(x.n)+'"><div><b>'+esc(x.titolo)+'</b><span class="s">'+x.domande.length+' domand'+(x.domande.length==1?'a':'e')+(x.creata?' · '+esc(fdt(x.creata)):'')+(()=>{const n=x.domande.filter((q,i)=>(x.rem||{})[kk(q,i)]&&(x.rem||{})[kk(q,i)].risposta).length;return n?' · '+n+' già inviate':''})()+'</span></div><div class="dot">'+x.domande.length+'</div></div>'});
+  else ap.forEach(x=>{h+='<div class="item" data-open="'+esc(x.n)+'"><div><b>'+esc(x.titolo)+'</b><span class="s">'+x.domande.length+' domand'+(x.domande.length==1?'a':'e')+(x.creata?' · '+esc(fdt(x.creata)):'')+(()=>{const n=x.domande.filter((q,i)=>(x.rem||{})[kk(q,i)]&&((x.rem||{})[kk(q,i)].risposta||(x.rem||{})[kk(q,i)].commento)).length;return n?' · '+n+' già inviate':''})()+'</span></div><div class="dot">'+x.domande.length+'</div></div>'});
   if(ch.length){h+='<div class="sech" style="margin-top:18px">Già inviate</div>';ch.slice(0,8).forEach(x=>{h+='<div class="item fatta"><div><b>'+esc(x.titolo)+'</b><span class="s">Risposte inviate</span></div><div class="dot d">✓</div></div>'})}
   main.innerHTML=h+agg();
 }
@@ -205,8 +205,8 @@ function apri(n){
   const rem=S.open.rem||{};S.rem=JSON.parse(JSON.stringify(rem));let first=-1;
   S.open.domande.forEach((q,i)=>{const k=kk(q,i),o=rem[k];
     if(o&&(o.risposta||o.commento)){const r={c:o.commento||''};if(o.risposta)r.v=o.risposta;if(q.tipo==='foto'&&o.foto&&q.foto){const j=q.foto.indexOf(o.foto);if(j>=0)r.fi=j}S.risp[k]=r}
-    if(o&&o.risposta)S.sent[k]=1;
-    if(first<0&&!(o&&o.risposta))first=i});
+    if(o&&(o.risposta||o.commento))S.sent[k]=1;
+    if(first<0&&!(o&&(o.risposta||o.commento)))first=i});
   S.idx=first<0?0:first;render()}
 function vCard(){
   const x=S.open,q=x.domande[S.idx],k=kk(q,S.idx),op=opz(q),r=S.risp[k]||{};
@@ -244,7 +244,7 @@ async function spedisci(keys,btn){
   try{
     const out=costruisci(keys);await scrivi('risposte/'+x.n+'.json',out,'risposte '+x.n);
     S.rem={};out.risposte.forEach(o=>{S.rem[String(o.id)]=o});x.rem=S.rem;
-    x.domande.forEach((q,i)=>{const k=kk(q,i);if(S.rem[k]&&S.rem[k].risposta)S.sent[k]=1});
+    x.domande.forEach((q,i)=>{const k=kk(q,i);if(S.rem[k]&&(S.rem[k].risposta||S.rem[k].commento))S.sent[k]=1});
     x.fatta=x.domande.every((q,i)=>S.sent[kk(q,i)]);S.err='';return true
   }catch(e){S.err=(e.message||'Errore')+' Le tue risposte restano qui: riprova.';btn.disabled=false;btn.textContent=t0;render();return false}
 }
