@@ -112,7 +112,7 @@ nav{position:fixed;left:0;right:0;bottom:0;background:var(--surface);border-top:
 <div id="lb"><img alt=""></div>
 <script>
 'use strict';
-const APP_V='2.4';
+const APP_V='2.5';
 const DEF_REPO='andreaguiotto02-8/ottoshots-data';
 const $=s=>document.querySelector(s), main=$('#main');
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -220,12 +220,13 @@ function vCard(){
   op.forEach((o,j)=>{h+='<button class="opt'+(r.v===o?' sel':'')+'" data-opt="'+j+'">'+(q.consigliata===o?'<span class="cons">consigliata</span>':'')+esc(o)+'</button>'});
   if(q.tipo==='testo'||!op.length)h+='<textarea id="tx" placeholder="Scrivi qui la risposta">'+esc(r.v||'')+'</textarea>';
   else h+='<textarea id="cm" placeholder="Commento (facoltativo)">'+esc(r.c||'')+'</textarea>';
-  h+='<div class="btns"><button class="sec2" data-act="nonso">Non so</button><button class="sec2" data-act="salta">Salta</button><button class="pri" id="av" data-act="invia1">'+(S.sent&&S.sent[k]?'Reinvia':'Invia')+'</button></div></div>';
+  h+='<div class="btns"><button class="sec2" data-act="nonso">Non so</button><button class="sec2" data-act="salta">Salta</button><button class="pri" id="av" data-act="invia1">'+(sameSent(k)?'Inviata ✓':'Invia')+'</button></div></div>';
   main.innerHTML=h;aggAv();caricaImg();
 }
 function curK(){const q=S.open.domande[S.idx];return kk(q,S.idx)}
 function salva(){const k=curK();S.risp[k]=S.risp[k]||{};const tx=$('#tx'),cm=$('#cm');if(tx)S.risp[k].v=tx.value.trim();if(cm)S.risp[k].c=cm.value.trim()}
-function aggAv(){const b=$('#av');if(!b)return;const r=S.risp[curK()]||{},tx=$('#tx'),cm=$('#cm');const f=()=>{b.disabled=tx?!tx.value.trim():!(r.v||(cm&&cm.value.trim()))};f();if(tx)tx.oninput=f;if(cm)cm.oninput=f}
+function sameSent(k){const r=S.risp[k]||{};const o=S.rem&&S.rem[k];return !!(S.sent&&S.sent[k]&&o&&(o.risposta||'')===(r.v||'')&&(o.commento||'')===(r.c||''))}
+function aggAv(){const b=$('#av');if(!b)return;const r=S.risp[curK()]||{},tx=$('#tx'),cm=$('#cm');const f=()=>{const k=curK();const rr=S.risp[k]||{};const v=tx?tx.value.trim():rr.v,c=cm?cm.value.trim():(rr.c||'');const same=S.sent&&S.sent[k]&&S.rem&&S.rem[k]&&(S.rem[k].risposta||'')===(v||'')&&(S.rem[k].commento||'')===c;b.disabled=same||(tx?!tx.value.trim():!(rr.v||c));b.textContent=same?'Inviata ✓':'Invia'};f();if(tx)tx.oninput=f;if(cm)cm.oninput=f}
 function passa(){if(S.idx<S.open.domande.length-1){S.idx++;render()}else{S.fase='riep';render()}}
 function vRiep(){
   const x=S.open;let h='<button class="ghost" data-act="indietro">← Indietro</button><h2 style="margin-top:6px">Controlla e invia</h2><p class="meta">Quando premi Invia, le risposte arrivano al sistema.</p>';
@@ -254,8 +255,10 @@ async function inviaQ(){
   toast(r.v?'Risposta inviata':'Commento inviato');
   if(x.fatta){S.fase='ok';render();return}
   const nx=x.domande.findIndex((q,i)=>i>S.idx&&!S.sent[kk(q,i)]);
-  if(nx>=0)S.idx=nx;else if(S.idx<x.domande.length-1)S.idx++;
-  render()
+  if(nx>=0){S.idx=nx;render();return}
+  const left=x.domande.filter((q,i)=>!S.sent[kk(q,i)]).length;
+  toast(left?'Restano '+left+' domande senza risposta':'Fatto');
+  S.fase='riep';render()
 }
 async function invia(){
   const x=S.open,keys=new Set(x.domande.map((q,i)=>kk(q,i)).filter(k=>{const r=S.risp[k]||{};return r.v||r.c}));
@@ -265,7 +268,7 @@ async function invia(){
   toast('Inviate. Restano '+x.domande.filter((q,i)=>!S.sent[kk(q,i)]).length+' domande aperte');
   const nx=x.domande.findIndex((q,i)=>!S.sent[kk(q,i)]);S.idx=nx<0?0:nx;S.fase='dom';render()
 }
-function vOk(){main.innerHTML='<div class="empty" style="border-style:solid"><div class="big">🎉</div><b>Risposte inviate</b>Non devi fare altro: il sistema le legge da solo.<div class="btns"><button class="pri" data-act="esci">Torna alle domande</button></div></div>'}
+function vOk(){main.innerHTML='<div class="empty" style="border-style:solid"><div class="big">🎉</div><b>Hai risposto a tutte le domande</b>Non ci sono altre domande a cui rispondere. Il sistema legge le risposte da solo.<div class="btns"><button class="pri" data-act="esci">Torna alle domande</button></div></div>'}
 
 /* ---------- Album ---------- */
 function vAlb(){
