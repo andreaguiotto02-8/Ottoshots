@@ -158,7 +158,7 @@ nav{background:color-mix(in srgb,var(--bg) 82%,transparent);-webkit-backdrop-fil
 <div id="lb"><img alt=""><button id="lbx" aria-label="Chiudi">✕</button><button id="lbp" aria-label="Precedente">‹</button><button id="lbn2" aria-label="Successiva">›</button><div id="lbc"></div></div>
 <script>
 'use strict';
-const APP_V='3.2';
+const APP_V='3.3';
 const DEF_REPO='andreaguiotto02-8/ottoshots-data';
 const VAPID_PUB='BM1nBAYKhFCtuM4cE0lH1PyN2sV2p02GPusQUmEjs_KvA0JsRN-mGOL9EXRD6S7nSKWOnksQUJGAGMSTXyOX7pQ';
 const $=s=>document.querySelector(s), main=$('#main');
@@ -352,17 +352,37 @@ function vAlb(){
   main.innerHTML=h+agg();
 }
 
+function blocchiProgetto(st){
+  const p=st.progetto||{},sez=[];
+  const L=a=>(a||[]).filter(Boolean);
+  const prob=L(st.problemi),tu=L(p.tu).concat(L(st.devi_fare).filter(x=>!L(p.tu).includes(x)));
+  const coda=Array.isArray(st.coda)?st.coda.map(c=>(c.stato=='in_corso'?'In corso: ':'In coda: ')+c.testo):[];
+  if(prob.length)sez.push(['🚨','PROBLEMI',prob,'bad']);
+  sez.push(['👉','DA FARE TU',tu.length?tu:['Niente adesso: il sistema va da solo.'],'']);
+  if(p.chat)sez.push(['💬','PROSSIMO PASSO CON CLAUDE IN CHAT',[p.chat],'']);
+  if(coda.length||p.incorso)sez.push(['⏳','IN CORSO',coda.concat(L(p.incorso)),'']);
+  if(L(p.fatto).length)sez.push(['✅','FATTO',L(p.fatto),'']);
+  if(L(p.dopo).length)sez.push(['📋','DOPO, IN ORDINE',L(p.dopo),'']);
+  if(L(p.attenzione).length)sez.push(['⚠️','DA TENERE D\'OCCHIO',L(p.attenzione),'']);
+  let h='';
+  if(p.fase)h+='<div class="card"><div class="kick">A che punto siamo</div><p style="margin:6px 0 0;font-size:16px;font-weight:600">'+esc(p.fase)+'</p></div>';
+  sez.forEach(x=>{h+='<div class="card"><div class="kick">'+x[0]+' '+x[1]+'</div><div class="plist" style="margin-top:8px">'+x[2].map(t=>'<div class="pl'+(x[3]?' bad':'')+'">'+esc(t)+'</div>').join('')+'</div></div>'});
+  return h;
+}
 /* ---------- Oggi ---------- */
 function vOggi(){
   const st=S.stato;let h=banner();
   h+='<div style="display:flex;justify-content:flex-end"><button class="ghost" data-act="ref">'+(S.busy?'Aggiorno…':(S.agg?fh(S.agg)+' · ':'')+'↻ Aggiorna')+'</button></div>';
   if(!st){main.innerHTML=h+'<div class="empty"><b>Ancora niente da mostrare</b>Il riepilogo compare dopo la prossima esecuzione del sistema.</div>'+agg();return}
   h+='<div class="card"><div class="kick">Ora</div><div class="now" style="margin-top:6px"><span class="pulse"></span><div style="font-size:17px;font-weight:600">'+esc(st.ora||'Nessuna attività in corso')+'</div></div></div>';
+  if(st.progetto){h+=blocchiProgetto(st)}
+  else{
   if(Array.isArray(st.coda)){const old=st.aggiornato&&ore(st.aggiornato)>90;
     if(st.coda.length){h+='<div class="card"><div class="kick">Lavoro del PC</div><p style="margin:6px 0 0;font-size:16px;font-weight:600">Il PC ha ancora '+st.coda.length+(st.coda.length==1?' lavoro':' lavori')+': lascialo acceso.</p><div class="plist" style="margin-top:8px">'+st.coda.map(c=>'<div class="pl"><div class="h">'+(c.stato=='in_corso'?'In corso':'In coda')+'</div>'+esc(c.testo)+'</div>').join('')+'</div>'+(old?'<p class="meta" style="margin-top:8px">Dato di '+esc(oreTxt(ore(st.aggiornato)))+' fa: potrebbe essere già cambiato.</p>':'')+'</div>'}
     else h+='<div class="card"><div class="kick">Lavoro del PC</div><p style="margin:6px 0 0;font-size:16px;font-weight:600">Il PC non ha niente da fare: puoi spegnerlo.</p>'+(old?'<p class="meta" style="margin-top:8px">Dato di '+esc(oreTxt(ore(st.aggiornato)))+' fa: controlla che sia ancora così.</p>':'')+'</div>'}
   if(st.devi_fare&&st.devi_fare.length)h+='<div class="card"><div class="kick">Cosa devi fare tu</div><p style="margin:6px 0 0;font-size:16px;font-weight:600">'+st.devi_fare.map(esc).join('<br>')+'</p></div>';
   else h+='<div class="card"><div class="kick">Cosa devi fare tu</div><p style="margin:6px 0 0;font-size:16px;font-weight:600">Niente, va tutto da solo.</p></div>';
+  }
   if(st.oggi&&st.oggi.length){h+='<div class="sech" style="margin-top:6px">Riepilogo di oggi</div><div class="plist">';st.oggi.forEach(e=>{h+='<div class="pl'+(e.problema?' bad':'')+'"><div class="h">'+esc(e.ora||'')+'</div>'+esc(e.testo)+'</div>'});h+='</div>'}
   if(st.prossimo)h+='<div class="card" style="margin-top:14px"><div class="kick">Prossimo passo</div><p style="margin:6px 0 0">'+esc(st.prossimo)+'</p></div>';
   main.innerHTML=h;
