@@ -115,8 +115,9 @@ nav{position:fixed;left:0;right:0;bottom:0;background:var(--surface);border-top:
 <div id="lb"><img alt=""><button id="lbx" aria-label="Chiudi">✕</button><button id="lbp" aria-label="Precedente">‹</button><button id="lbn2" aria-label="Successiva">›</button><div id="lbc"></div></div>
 <script>
 'use strict';
-const APP_V='2.9';
+const APP_V='2.10';
 const DEF_REPO='andreaguiotto02-8/ottoshots-data';
+const VAPID_PUB='BM1nBAYKhFCtuM4cE0lH1PyN2sV2p02GPusQUmEjs_KvA0JsRN-mGOL9EXRD6S7nSKWOnksQUJGAGMSTXyOX7pQ';
 const $=s=>document.querySelector(s), main=$('#main');
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let mem={};
@@ -313,11 +314,40 @@ function vOggi(){
   main.innerHTML=h+(st.aggiornato?'<p class="meta" style="text-align:center;margin-top:12px">Stato del sistema: '+esc(fdt(st.aggiornato))+'</p>':'')+agg();
 }
 
+
+/* ---------- Notifiche sul telefono ---------- */
+function urlB64(b){const p='='.repeat((4-b.length%4)%4),s=(b+p).replace(/-/g,'+').replace(/_/g,'/'),r=atob(s),o=new Uint8Array(r.length);for(let i=0;i<r.length;i++)o[i]=r.charCodeAt(i);return o}
+function notifCard(){
+  const sup='Notification' in window&&'serviceWorker' in navigator&&'PushManager' in window;
+  const on=sup&&Notification.permission==='granted'&&store.get('notif');
+  const t=!sup?'Questo telefono o questo browser non supporta le notifiche.':on?'Attive su questo telefono: ti avviso quando ci sono domande nuove o problemi.':Notification.permission==='denied'?'Le notifiche sono bloccate: sbloccale dalle impostazioni del telefono per questo sito.':'Ti avviso quando ci sono domande nuove o problemi.';
+  return '<div class="card"><h2>Notifiche</h2><p class="meta" id="nt">'+t+'</p>'+(sup?'<div class="btns"><button class="'+(on?'sec2':'pri')+'" data-act="notif">'+(on?'Riattiva su questo telefono':'Attiva notifiche')+'</button></div>':'')+'</div>';
+}
+async function attivaNotifiche(){
+  const nt=$('#nt');const msg=m=>{if(nt)nt.textContent=m};
+  try{
+    if(!cfg()){msg('Prima collega il sistema qui sotto (chiave di accesso).');return}
+    const p=await Notification.requestPermission();
+    if(p!=='granted'){msg('Non hai dato il permesso. Riprova e tocca Consenti.');return}
+    msg('Attivo…');
+    const reg=await navigator.serviceWorker.ready;
+    let sub=await reg.pushManager.getSubscription();
+    if(!sub)sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:urlB64(VAPID_PUB)});
+    const js=sub.toJSON();
+    let l=await leggiJson('push/sub.json');if(!Array.isArray(l))l=[];
+    l=l.filter(x=>x&&x.endpoint!==js.endpoint);l.push(js);if(l.length>5)l=l.slice(-5);
+    await scrivi('push/sub.json',l,'Notifiche attivate su un telefono');
+    store.set('notif',true);
+    try{await reg.showNotification('Ottoshots',{body:'Notifiche attive. Ti avviso quando serve.',icon:'icon-192.png'})}catch(e){}
+    render();
+  }catch(e){msg('Non sono riuscito ad attivarle: '+(e&&e.message||'errore')+'. Riprova.')}
+}
+
 /* ---------- Impostazioni ---------- */
 function vImp(){
   const c=store.get('cfg')||{};const on=!!(c.token&&c.repo);
   const tm=store.get('tema')||'auto';
-  main.innerHTML=banner()+'<div class="card"><h2>Aspetto</h2><div class="seg">'+[['auto','Automatico'],['scuro','Scuro'],['chiaro','Chiaro']].map(x=>'<button data-act="tema" data-v="'+x[0]+'" class="'+(tm===x[0]?'on':'')+'">'+x[1]+'</button>').join('')+'</div></div><div class="card"><h2>Collegamento al sistema</h2><p class="meta">Serve una chiave di accesso a GitHub, una volta sola. Resta solo su questo telefono.</p>'+
+  main.innerHTML=banner()+'<div class="card"><h2>Aspetto</h2><div class="seg">'+[['auto','Automatico'],['scuro','Scuro'],['chiaro','Chiaro']].map(x=>'<button data-act="tema" data-v="'+x[0]+'" class="'+(tm===x[0]?'on':'')+'">'+x[1]+'</button>').join('')+'</div></div>'+notifCard()+'<div class="card"><h2>Collegamento al sistema</h2><p class="meta">Serve una chiave di accesso a GitHub, una volta sola. Resta solo su questo telefono.</p>'+
    '<label class="f">Archivio<input id="repo" value="'+esc(c.repo||DEF_REPO)+'" autocapitalize="off" spellcheck="false"></label>'+
    '<label class="f">Chiave di accesso<input id="tok" type="password" autocomplete="off" placeholder="'+(on?'•••••• già salvata (lascia vuoto per tenerla)':'incolla qui la chiave')+'"></label>'+
    '<p class="meta" id="st">'+(on?(S.agg?'Collegato. Ultimo aggiornamento: '+esc(fdt(S.agg)):'Chiave salvata.'):'Non collegato.')+'</p>'+
@@ -394,6 +424,7 @@ document.addEventListener('click',e=>{
   else if(a==='cons'){S.open.domande.forEach((q,i)=>{S.risp[kk(q,i)]={v:q.consigliata,c:S.risp[kk(q,i)]?.c||''}});S.fase='riep';render()}
   else if(a==='invia')invia();
   else if(a==='salvacfg')salvaCfg();
+  else if(a==='notif')attivaNotifiche();
   else if(a==='tema'){store.set('tema',t.dataset.v);applyTema();render()}
   else if(a==='scollega'){store.set('cfg',null);S.dom=[];S.stato=null;toast('Scollegato');render()}
 });
