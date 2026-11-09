@@ -158,7 +158,7 @@ nav{background:color-mix(in srgb,var(--bg) 82%,transparent);-webkit-backdrop-fil
 <div id="lb"><img alt=""><button id="lbx" aria-label="Chiudi">✕</button><button id="lbp" aria-label="Precedente">‹</button><button id="lbn2" aria-label="Successiva">›</button><div id="lbc"></div></div>
 <script>
 'use strict';
-const APP_V='3.0';
+const APP_V='3.1';
 const DEF_REPO='andreaguiotto02-8/ottoshots-data';
 const VAPID_PUB='BM1nBAYKhFCtuM4cE0lH1PyN2sV2p02GPusQUmEjs_KvA0JsRN-mGOL9EXRD6S7nSKWOnksQUJGAGMSTXyOX7pQ';
 const $=s=>document.querySelector(s), main=$('#main');
@@ -243,13 +243,13 @@ function salute(){const st=S.stato,a=[];if(!st)return a;
   if(st.sincronizzazione&&st.sincronizzazione.ok===false)a.push('Problema di sincronizzazione tra telefono e PC'+(st.sincronizzazione.nota?': '+st.sincronizzazione.nota:'.'));
   (st.problemi||[]).forEach(x=>a.push(x));return a}
 const banner=()=>{let h=S.err?'<div class="banner">'+esc(S.err)+'</div>':'';const sa=salute();if(sa.length)h+='<div class="banner" style="border-color:var(--bad);background:color-mix(in srgb,var(--bad) 14%,var(--surface))"><b style="color:var(--bad)">Attenzione</b><br>'+sa.map(esc).join('<br>')+'</div>';return h}
-const agg=()=>S.agg?'<p class="meta" style="text-align:center;margin-top:12px">Aggiornato alle '+esc(fh(S.agg))+'</p>':'';
+const agg=()=>false?'<p class="meta" style="text-align:center;margin-top:12px">Aggiornato alle '+esc(fh(S.agg))+'</p>':'';
 
 /* ---------- Domande ---------- */
 function vDom(){
   if(S.fase==='dom')return vCard(); if(S.fase==='riep')return vRiep(); if(S.fase==='ok')return vOk();
   const ap=S.dom.filter(x=>!x.fatta),ch=S.dom.filter(x=>x.fatta);let h=banner();
-  h+='<div style="display:flex;justify-content:space-between;align-items:center"><div class="sech" style="margin:0">Da rispondere</div><button class="ghost" data-act="ref">'+(S.busy?'Aggiorno…':'↻ Aggiorna')+'</button></div>';
+  h+='<div style="display:flex;justify-content:space-between;align-items:center"><div class="sech" style="margin:0">Da rispondere</div><button class="ghost" data-act="ref">'+(S.busy?'Aggiorno…':(S.agg?fh(S.agg)+' · ':'')+'↻ Aggiorna')+'</button></div>';
   if(!ap.length) h+='<div class="empty"><div class="big">✅</div><b>Niente da rispondere</b>Quando il sistema ha domande nuove le trovi qui e ti arriva una notifica.</div>';
   else ap.forEach(x=>{h+='<div class="item" data-open="'+esc(x.n)+'"><div><b>'+esc(x.titolo)+'</b><span class="s">'+x.domande.length+' domand'+(x.domande.length==1?'a':'e')+(x.creata?' · '+esc(fdt(x.creata)):'')+(()=>{const n=x.domande.filter((q,i)=>(x.rem||{})[kk(q,i)]&&((x.rem||{})[kk(q,i)].risposta||(x.rem||{})[kk(q,i)].commento)).length;return n?' · '+n+' già inviate':''})()+'</span></div><div class="dot">'+x.domande.length+'</div></div>'});
   if(ch.length){h+='<div class="sech" style="margin-top:18px">Già inviate</div>';ch.slice(0,8).forEach(x=>{h+='<div class="item fatta"><div><b>'+esc(x.titolo)+'</b><span class="s">Risposte inviate</span></div><div class="dot d">✓</div></div>'})}
@@ -329,7 +329,7 @@ function vOk(){main.innerHTML='<div class="empty" style="border-style:solid"><di
 
 /* ---------- Album ---------- */
 function vAlb(){
-  let h=banner()+'<div style="display:flex;justify-content:space-between;align-items:center"><div class="sech" style="margin:0">Album: come verrà riordinato</div><button class="ghost" data-act="ref">'+(S.busy?'Aggiorno…':'↻ Aggiorna')+'</button></div>';
+  let h=banner()+'<div style="display:flex;justify-content:space-between;align-items:center"><div class="sech" style="margin:0">Album: come verrà riordinato</div><button class="ghost" data-act="ref">'+(S.busy?'Aggiorno…':(S.agg?fh(S.agg)+' · ':'')+'↻ Aggiorna')+'</button></div>';
   const a=S.alb;
   if(!a||!Array.isArray(a.cartelle)||!a.cartelle.length){main.innerHTML=h+'<div class="empty"><b>Elenco non ancora pronto</b>Compare qui appena il PC prepara l\'elenco delle cartelle.</div>'+agg();return}
   const tot=a.cartelle.reduce((n,c)=>n+(+c.foto||0),0),prov=a.cartelle.filter(c=>c.provvisorio).length;
@@ -344,7 +344,7 @@ function vAlb(){
 /* ---------- Oggi ---------- */
 function vOggi(){
   const st=S.stato;let h=banner();
-  h+='<div style="display:flex;justify-content:flex-end"><button class="ghost" data-act="ref">'+(S.busy?'Aggiorno…':'↻ Aggiorna')+'</button></div>';
+  h+='<div style="display:flex;justify-content:flex-end"><button class="ghost" data-act="ref">'+(S.busy?'Aggiorno…':(S.agg?fh(S.agg)+' · ':'')+'↻ Aggiorna')+'</button></div>';
   if(!st){main.innerHTML=h+'<div class="empty"><b>Ancora niente da mostrare</b>Il riepilogo compare dopo la prossima esecuzione del sistema.</div>'+agg();return}
   h+='<div class="card"><div class="kick">Ora</div><div class="now" style="margin-top:6px"><span class="pulse"></span><div style="font-size:17px;font-weight:600">'+esc(st.ora||'Nessuna attività in corso')+'</div></div></div>';
   if(Array.isArray(st.coda)){const old=st.aggiornato&&ore(st.aggiornato)>90;
@@ -354,7 +354,7 @@ function vOggi(){
   else h+='<div class="card"><div class="kick">Cosa devi fare tu</div><p style="margin:6px 0 0;font-size:16px;font-weight:600">Niente, va tutto da solo.</p></div>';
   if(st.oggi&&st.oggi.length){h+='<div class="sech" style="margin-top:6px">Riepilogo di oggi</div><div class="plist">';st.oggi.forEach(e=>{h+='<div class="pl'+(e.problema?' bad':'')+'"><div class="h">'+esc(e.ora||'')+'</div>'+esc(e.testo)+'</div>'});h+='</div>'}
   if(st.prossimo)h+='<div class="card" style="margin-top:14px"><div class="kick">Prossimo passo</div><p style="margin:6px 0 0">'+esc(st.prossimo)+'</p></div>';
-  main.innerHTML=h+(st.aggiornato?'<p class="meta" style="text-align:center;margin-top:12px">Stato del sistema: '+esc(fdt(st.aggiornato))+'</p>':'')+agg();
+  main.innerHTML=h;
 }
 
 
