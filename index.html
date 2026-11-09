@@ -5,21 +5,21 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Ottoshots</title>
 <link rel="manifest" href="manifest.webmanifest">
-<meta name="theme-color" content="#0f1012">
+<meta name="theme-color" content="#0c0c0d">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-maskable-192.png">
 <style>
 :root{
-  --bg:#0f1012; --surface:#17191d; --surface2:#21242a; --line:#2d3037; --fg:#f2f3f5; --muted:#9a9ea8;
-  --accent:#5B9DFF; --on-accent:#0a1226; --accent2:#FFB547; --on-accent2:#2a1a00; --hl:#16233b; --good:#4fd1a1; --bad:#ff8a7a;
-  --font:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; color-scheme:dark;
+  --bg:#0c0c0d; --surface:#161617; --surface2:#222224; --line:#2a2a2d; --fg:#f4f2ee; --muted:#9a978f;
+  --accent:#e8dcc4; --on-accent:#17140e; --accent2:#e0b565; --on-accent2:#241a05; --hl:#26231c; --good:#7fd1a8; --bad:#ff8f7e;
+  --font:ui-rounded,"SF Pro Rounded",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; color-scheme:dark;
 }
 @media (prefers-color-scheme: light){
-  :root:not([data-tema="scuro"]){--bg:#f4f5f7; --surface:#ffffff; --surface2:#eceef2; --line:#d6d9e0; --fg:#14161a; --muted:#5b6070;
-    --accent:#2f6fe0; --on-accent:#ffffff; --accent2:#c97800; --on-accent2:#ffffff; --hl:#e4eeff; --good:#1b7d5c; --bad:#b3261e; color-scheme:light}
+  :root:not([data-tema="scuro"]){--bg:#f6f3ee; --surface:#ffffff; --surface2:#ece8e1; --line:#e2ddd4; --fg:#1a1814; --muted:#7a756a;
+    --accent:#1a1814; --on-accent:#f6f3ee; --accent2:#a8751b; --on-accent2:#ffffff; --hl:#efe9dc; --good:#2f7d5a; --bad:#b3261e; color-scheme:light}
 }
-:root[data-tema="chiaro"]{--bg:#f4f5f7; --surface:#ffffff; --surface2:#eceef2; --line:#d6d9e0; --fg:#14161a; --muted:#5b6070;
-  --accent:#2f6fe0; --on-accent:#ffffff; --accent2:#c97800; --on-accent2:#ffffff; --hl:#e4eeff; --good:#1b7d5c; --bad:#b3261e; color-scheme:light}
+:root[data-tema="chiaro"]{--bg:#f6f3ee; --surface:#ffffff; --surface2:#ece8e1; --line:#e2ddd4; --fg:#1a1814; --muted:#7a756a;
+  --accent:#1a1814; --on-accent:#f6f3ee; --accent2:#a8751b; --on-accent2:#ffffff; --hl:#efe9dc; --good:#2f7d5a; --bad:#b3261e; color-scheme:light}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0}
 body{background:var(--bg);color:var(--fg);font:16px/1.45 var(--font);min-height:100vh;
@@ -98,24 +98,67 @@ nav{position:fixed;left:0;right:0;bottom:0;background:var(--surface);border-top:
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(86px + env(safe-area-inset-bottom, 0px));background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:999px;font-weight:600;font-size:14px;opacity:0;transition:opacity .25s;pointer-events:none;z-index:30}
 .toast.on{opacity:1}
 .big{font-size:42px;margin-bottom:6px}
+
+/* ===== v3.0 stile galleria ===== */
+body{font-size:16px;letter-spacing:-.005em}
+.top{align-items:flex-end;margin:6px 2px 18px}
+.brand{font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+h1{font-size:34px;font-weight:800;letter-spacing:-.025em;color:var(--fg);line-height:1.05;margin-top:2px}
+h2{letter-spacing:-.01em}
+.card{border:0;border-radius:24px;padding:18px;box-shadow:0 1px 0 var(--line)}
+.item{border:0;border-radius:20px;padding:16px 18px;box-shadow:0 1px 0 var(--line)}
+.sum{border:0;border-radius:16px}
+.stepcard{border:0;border-radius:26px;padding:18px;box-shadow:0 1px 0 var(--line)}
+.kick{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.pri{border-radius:999px;min-height:54px}
+.sec2{border-radius:999px;min-height:54px}
+.opt{border-radius:20px;border-width:1.5px;background:var(--surface2)}
+.opt.sel{background:var(--hl);border-color:var(--fg)}
+.opt .cons{color:var(--accent2)}
+.chip{border-radius:999px}.chip.cur{background:var(--fg);color:var(--bg)}
+.pg{gap:6px}
+.ph{border-radius:20px}.pg.multi .ph{border-radius:14px}
+.ph.sel{border-color:var(--fg)}
+.ph .ck{background:var(--fg);color:var(--bg)}
+.prog>i{background:var(--fg)}
+.dot{background:var(--fg);color:var(--bg)}.dot.d{background:var(--good);color:#fff}
+.seg button{border-radius:999px}.seg button.on{border-color:var(--fg);background:var(--hl)}
+.banner{border-radius:18px;border-color:var(--accent2)}
+.empty{border-radius:24px}
+nav{background:color-mix(in srgb,var(--bg) 82%,transparent);-webkit-backdrop-filter:blur(18px) saturate(1.4);backdrop-filter:blur(18px) saturate(1.4);border-top:1px solid var(--line);gap:2px}
+.tab{font-size:11px;font-weight:600;border-radius:16px}
+.tab[aria-current="page"]{color:var(--fg)}
+.tab[aria-current="page"] svg{stroke-width:2.4}
+.tab .bd{background:var(--accent2);color:var(--on-accent2)}
+.pl:before{background:var(--fg)}
+.pulse{background:var(--good)}
+.toast{background:var(--fg);color:var(--bg)}
+.albg{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:2px 0 8px}
+.alc{background:var(--surface);border-radius:22px;padding:14px;box-shadow:0 1px 0 var(--line);min-height:104px;display:flex;flex-direction:column;justify-content:flex-end;text-align:left;border:0}
+.alc .n{font-weight:700;font-size:15px;line-height:1.2;overflow-wrap:break-word}
+.alc .m{font-size:12.5px;color:var(--muted);margin-top:3px}
+.alc.pv{background:var(--hl)}
+.yhead{display:flex;justify-content:space-between;align-items:baseline;margin:20px 2px 8px;cursor:pointer;border:0;background:none;width:calc(100% - 4px);padding:0}
+.yhead b{font-size:22px;font-weight:800;letter-spacing:-.02em}
+.yhead span{font-size:13px;color:var(--muted)}
 </style>
 </head>
 <body>
 <div class="wrap">
-  <header class="top"><h1>Otto<span class="ra">shots</span></h1><span class="ver" id="ver"></span></header>
+  <header class="top"><div><div class="brand">Ottoshots</div><h1 id="ttl">Oggi</h1></div><span class="ver" id="ver"></span></header>
   <main id="main"></main>
 </div>
 <nav aria-label="Sezioni">
+  <button class="tab" data-tab="oggi"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span>Oggi</span></button>
   <button class="tab" data-tab="dom"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/></svg><span>Domande</span></button>
   <button class="tab" data-tab="alb"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg><span>Album</span></button>
-  <button class="tab" data-tab="oggi"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span>Oggi</span></button>
   <button class="tab" data-tab="imp"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></svg><span>Impostazioni</span></button>
 </nav>
 <div class="toast" id="toast"></div>
 <div id="lb"><img alt=""><button id="lbx" aria-label="Chiudi">✕</button><button id="lbp" aria-label="Precedente">‹</button><button id="lbn2" aria-label="Successiva">›</button><div id="lbc"></div></div>
 <script>
 'use strict';
-const APP_V='2.10';
+const APP_V='3.0';
 const DEF_REPO='andreaguiotto02-8/ottoshots-data';
 const VAPID_PUB='BM1nBAYKhFCtuM4cE0lH1PyN2sV2p02GPusQUmEjs_KvA0JsRN-mGOL9EXRD6S7nSKWOnksQUJGAGMSTXyOX7pQ';
 const $=s=>document.querySelector(s), main=$('#main');
@@ -125,11 +168,11 @@ const store={get(k){try{const v=localStorage.getItem('sd_'+k);return v==null?(me
   set(k,v){mem[k]=v;try{localStorage.setItem('sd_'+k,JSON.stringify(v))}catch(e){}}};
 const IMG={};
 function applyTema(){const t=store.get('tema')||'auto';const r=document.documentElement;if(t==='auto')r.removeAttribute('data-tema');else r.setAttribute('data-tema',t);
-  const dark=t==='scuro'||(t==='auto'&&!matchMedia('(prefers-color-scheme: light)').matches);const m=document.querySelector('meta[name=theme-color]');if(m)m.content=dark?'#0f1012':'#f4f5f7'}
+  const dark=t==='scuro'||(t==='auto'&&!matchMedia('(prefers-color-scheme: light)').matches);const m=document.querySelector('meta[name=theme-color]');if(m)m.content=dark?'#0c0c0d':'#f6f3ee'}
 async function imgUrl(p){if(IMG[p])return IMG[p];const c=cfg();if(!c)return null;try{const r=await fetch('https://api.github.com/repos/'+c.repo+'/contents/'+p,{headers:{Authorization:'Bearer '+c.token,Accept:'application/vnd.github.raw'},cache:'no-store'});if(!r.ok)return null;return IMG[p]=URL.createObjectURL(await r.blob())}catch(e){return null}}
 function caricaImg(){document.querySelectorAll('img[data-p]').forEach(async im=>{const u=await imgUrl(im.dataset.p);if(u)im.src=u;else im.alt='Anteprima non disponibile'})}
 const bn=p=>String(p).split('/').pop();
-let S={tab:'dom',dom:[],stato:null,alb:null,err:'',busy:false,open:null,idx:0,risp:{},fase:'lista',agg:null};
+let S={tab:'oggi',dom:[],stato:null,alb:null,err:'',busy:false,open:null,idx:0,risp:{},fase:'lista',agg:null};
 
 function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('on');clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.remove('on'),1800)}
 const cfg=()=>{const c=store.get('cfg');return c&&c.token&&c.repo?c:null};
@@ -188,7 +231,7 @@ async function carica(quiet){
 function badge(){const al=salute().length;document.querySelectorAll('.tab').forEach(t=>{if(t.dataset.tab==='oggi'){t.querySelector('.bd2')?.remove();if(al){const b=document.createElement('i');b.className='bd';b.classList.add('bd2');b.style.cssText='font-style:normal;background:var(--bad);color:#fff';b.textContent='!';t.appendChild(b)}}});const n=S.dom.filter(x=>!x.fatta).length;document.querySelectorAll('.tab').forEach(t=>{t.querySelector('.bd')?.remove();if(t.dataset.tab==='dom'&&n){const b=document.createElement('i');b.className='bd';b.style.fontStyle='normal';b.textContent=n;t.appendChild(b)}})}
 function render(){
   document.querySelectorAll('.tab').forEach(t=>{t.setAttribute('aria-current',t.dataset.tab===S.tab?'page':'false')});
-  $('#ver').textContent='v'+APP_V; badge();
+  $('#ver').textContent='v'+APP_V; {const T={oggi:'Oggi',dom:'Domande',alb:'Album',imp:'Impostazioni'};$('#ttl').textContent=(S.tab==='dom'&&S.fase!=='lista')?'Domande':T[S.tab]||''} badge();
   if(!cfg()&&S.tab!=='imp'){main.innerHTML='<div class="card"><h2>Prima di iniziare</h2><p>Per collegare l\'app al sistema serve la chiave di accesso. La inserisci una volta sola in Impostazioni.</p><div class="btns"><button class="pri" data-go="imp">Vai a Impostazioni</button></div></div>';return}
   if(S.tab==='dom') vDom(); else if(S.tab==='alb') vAlb(); else if(S.tab==='oggi') vOggi(); else vImp();
 }
@@ -293,8 +336,8 @@ function vAlb(){
   h+='<div class="card"><div class="now"><div><div style="font-size:24px;font-weight:800">'+a.cartelle.length+'</div><div class="meta">cartelle</div></div><div style="margin-left:18px"><div style="font-size:24px;font-weight:800">'+tot+'</div><div class="meta">foto</div></div>'+(prov?'<div style="margin-left:18px"><div style="font-size:24px;font-weight:800;color:var(--accent2)">'+prov+'</div><div class="meta">da nominare</div></div>':'')+'</div></div>';
   const by={};a.cartelle.forEach(c=>{(by[c.anno||'Senza anno']=by[c.anno||'Senza anno']||[]).push(c)});
   Object.keys(by).sort().reverse().forEach(y=>{const L=by[y],n=L.reduce((m,c)=>m+(+c.foto||0),0),open=S.altAnno===y;
-    h+='<div class="item" data-anno="'+esc(y)+'"><div><b>'+esc(y)+'</b><span class="s">'+L.length+' cartelle · '+n+' foto</span></div><div class="meta">'+(open?'▲':'▼')+'</div></div>';
-    if(open)L.forEach(c=>{h+='<div class="sum" style="margin-left:10px"><b>'+esc(c.nome)+(c.provvisorio?' <span style="color:var(--accent2);font-size:12px">· da nominare</span>':'')+'</b><span>'+(+c.foto||0)+' foto'+(c.raw?' · '+c.raw+' RAW':'')+(c.origine?' · da '+esc(c.origine):'')+'</span></div>'})});
+    h+='<button class="yhead" data-anno="'+esc(y)+'"><b>'+esc(y)+'</b><span>'+L.length+' cartelle · '+n+' foto '+(open?'▲':'▼')+'</span></button>';
+    if(open){h+='<div class="albg">';L.forEach(c=>{h+='<div class="alc'+(c.provvisorio?' pv':'')+'"><div class="n">'+esc(String(c.nome).replace(/_/g,' '))+'</div><div class="m">'+(+c.foto||0)+' foto'+(c.raw?' · '+c.raw+' RAW':'')+(c.provvisorio?' · da nominare':'')+'</div></div>'});h+='</div>'}});
   main.innerHTML=h+agg();
 }
 
