@@ -158,7 +158,7 @@ nav{background:color-mix(in srgb,var(--bg) 82%,transparent);-webkit-backdrop-fil
 <div id="lb"><img alt=""><button id="lbx" aria-label="Chiudi">✕</button><button id="lbp" aria-label="Precedente">‹</button><button id="lbn2" aria-label="Successiva">›</button><div id="lbc"></div></div>
 <script>
 'use strict';
-const APP_V='3.1';
+const APP_V='3.2';
 const DEF_REPO='andreaguiotto02-8/ottoshots-data';
 const VAPID_PUB='BM1nBAYKhFCtuM4cE0lH1PyN2sV2p02GPusQUmEjs_KvA0JsRN-mGOL9EXRD6S7nSKWOnksQUJGAGMSTXyOX7pQ';
 const $=s=>document.querySelector(s), main=$('#main');
@@ -201,6 +201,17 @@ async function scrivi(path,obj,msg){
 }
 function num(n){const m=/(\d+)\.json$/.exec(n);return m?m[1]:null}
 
+/* ---------- Notifiche lette: quando apro l'app segno cosa ho visto (le notifiche non lette si accumulano) ---------- */
+async function marcaLetto(){
+  try{
+    if(document.visibilityState!=='visible'||!S.stato)return;
+    const n=S.stato.notifiche||[],ult=store.get('letto')||'';
+    if(!n.some(x=>(x.il||'')>ult))return;
+    const now=new Date().toISOString();store.set('letto',now);
+    try{const reg=await navigator.serviceWorker.getRegistration();if(reg){(await reg.getNotifications()).forEach(x=>x.close())}}catch(e){}
+    await scrivi('push/letto.json',{il:now},'Notifiche lette');
+  }catch(e){}
+}
 let cRun=0,cStart=0;
 async function carica(quiet){
   if(!cfg()){S.err='';render();return}
@@ -217,7 +228,7 @@ async function carica(quiet){
       L.push({n,titolo:d.titolo||('Richiesta '+n),intro:d.intro||'',domande:d.domande,creata:d.creata||'',rem:remAll[n]||{},fatta:d.domande.length>0&&d.domande.every((q,i)=>{const o=(remAll[n]||{})[String(q.id||i+1)];return !!(o&&(o.risposta||o.commento))})})}
     L.sort((a,b)=>b.n.localeCompare(a.n));
     if(my!==cRun)return;
-    S.dom=L; S.stato=st; S.alb=al; S.err=''; S.agg=new Date().toISOString();
+    S.dom=L; S.stato=st; S.alb=al; S.err=''; S.agg=new Date().toISOString(); marcaLetto();
     store.set('cache',{dom:L,stato:S.stato,alb:S.alb,agg:S.agg});
     if(!quiet)toast('Aggiornato ✓');
   }catch(e){
