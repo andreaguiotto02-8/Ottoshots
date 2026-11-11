@@ -158,7 +158,7 @@ nav{background:color-mix(in srgb,var(--bg) 82%,transparent);-webkit-backdrop-fil
 <div id="lb"><img alt=""><button id="lbx" aria-label="Chiudi">✕</button><button id="lbp" aria-label="Precedente">‹</button><button id="lbn2" aria-label="Successiva">›</button><div id="lbc"></div></div>
 <script>
 'use strict';
-const APP_V='3.3';
+const APP_V='3.4';
 const DEF_REPO='andreaguiotto02-8/ottoshots-data';
 const VAPID_PUB='BM1nBAYKhFCtuM4cE0lH1PyN2sV2p02GPusQUmEjs_KvA0JsRN-mGOL9EXRD6S7nSKWOnksQUJGAGMSTXyOX7pQ';
 const $=s=>document.querySelector(s), main=$('#main');
@@ -228,7 +228,7 @@ async function carica(quiet){
       L.push({n,titolo:d.titolo||('Richiesta '+n),intro:d.intro||'',domande:d.domande,creata:d.creata||'',rem:remAll[n]||{},fatta:d.domande.length>0&&d.domande.every((q,i)=>{const o=(remAll[n]||{})[String(q.id||i+1)];return !!(o&&(o.risposta||o.commento))})})}
     L.sort((a,b)=>b.n.localeCompare(a.n));
     if(my!==cRun)return;
-    S.dom=L; S.stato=st; S.alb=al; S.err=''; S.agg=new Date().toISOString(); marcaLetto();
+    S.dom=L; S.stato=st; S.alb=al; S.err=''; S.agg=new Date().toISOString(); marcaLetto(); rinnovaNotificheAuto();
     store.set('cache',{dom:L,stato:S.stato,alb:S.alb,agg:S.agg});
     if(!quiet)toast('Aggiornato ✓');
   }catch(e){
@@ -397,6 +397,22 @@ function notifCard(){
   const t=!sup?'Questo telefono o questo browser non supporta le notifiche.':on?'Attive su questo telefono: ti avviso quando ci sono domande nuove o problemi.':Notification.permission==='denied'?'Le notifiche sono bloccate: sbloccale dalle impostazioni del telefono per questo sito.':'Ti avviso quando ci sono domande nuove o problemi.';
   return '<div class="card"><h2>Notifiche</h2><p class="meta" id="nt">'+t+'</p>'+(sup?'<div class="btns"><button class="'+(on?'sec2':'pri')+'" data-act="notif">'+(on?'Riattiva su questo telefono':'Attiva notifiche')+'</button></div>':'')+'</div>';
 }
+async function rinnovaNotificheAuto(){
+  try{
+    if(!('Notification' in window)||Notification.permission!=='granted'||!store.get('notif')||!cfg())return;
+    const ult=store.get('notif_rinnovo')||0;if(Date.now()-ult<20*3600*1000)return;
+    const reg=await navigator.serviceWorker.ready;
+    let sub=await reg.pushManager.getSubscription();
+    const vecchio=sub&&sub.endpoint;
+    if(sub){try{await sub.unsubscribe()}catch(e){}}
+    sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:urlB64(VAPID_PUB)});
+    const js=sub.toJSON();
+    let l=await leggiJson('push/sub.json');if(!Array.isArray(l))l=[];
+    l=l.filter(x=>x&&x.endpoint!==js.endpoint&&x.endpoint!==vecchio);l.push(js);if(l.length>5)l=l.slice(-5);
+    await scrivi('push/sub.json',l,'Notifiche rinnovate');
+    store.set('notif_rinnovo',Date.now());
+  }catch(e){}
+}
 async function attivaNotifiche(){
   const nt=$('#nt');const msg=m=>{if(nt)nt.textContent=m};
   try{
@@ -406,10 +422,12 @@ async function attivaNotifiche(){
     msg('Attivo…');
     const reg=await navigator.serviceWorker.ready;
     let sub=await reg.pushManager.getSubscription();
-    if(!sub)sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:urlB64(VAPID_PUB)});
+    const vecchio=sub&&sub.endpoint;
+    if(sub){try{await sub.unsubscribe()}catch(e){}}
+    sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:urlB64(VAPID_PUB)});
     const js=sub.toJSON();
     let l=await leggiJson('push/sub.json');if(!Array.isArray(l))l=[];
-    l=l.filter(x=>x&&x.endpoint!==js.endpoint);l.push(js);if(l.length>5)l=l.slice(-5);
+    l=l.filter(x=>x&&x.endpoint!==js.endpoint&&x.endpoint!==vecchio);l.push(js);if(l.length>5)l=l.slice(-5);
     await scrivi('push/sub.json',l,'Notifiche attivate su un telefono');
     store.set('notif',true);
     try{await reg.showNotification('Ottoshots',{body:'Notifiche attive. Ti avviso quando serve.',icon:'icon-192.png'})}catch(e){}
