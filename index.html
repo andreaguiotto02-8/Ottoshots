@@ -158,7 +158,7 @@ nav{background:color-mix(in srgb,var(--bg) 82%,transparent);-webkit-backdrop-fil
 <div id="lb"><img alt=""><button id="lbx" aria-label="Chiudi">✕</button><button id="lbp" aria-label="Precedente">‹</button><button id="lbn2" aria-label="Successiva">›</button><div id="lbc"></div></div>
 <script>
 'use strict';
-const APP_V='3.5';
+const APP_V='3.6';
 const DEF_REPO='andreaguiotto02-8/ottoshots-data';
 const VAPID_PUB='BM1nBAYKhFCtuM4cE0lH1PyN2sV2p02GPusQUmEjs_KvA0JsRN-mGOL9EXRD6S7nSKWOnksQUJGAGMSTXyOX7pQ';
 const $=s=>document.querySelector(s), main=$('#main');
@@ -352,6 +352,14 @@ function vAlb(){
   main.innerHTML=h+agg();
 }
 
+function cartaPC(st){
+  const pc=st.pc||{},m=pc.visto?ore(pc.visto):null,n=+pc.lavori||0;
+  let t,sub='',cl='';
+  if(m===null){t='Non so se il PC è acceso';sub='Il segnale del PC non è ancora attivo: partirà dopo il prossimo accendersi del PC.'}
+  else if(m<=100){t=n?'Il PC è acceso e sta lavorando':'Il PC è acceso, nessun lavoro in attesa';sub=n?'Lavori ancora da fare: '+n+'. Lascialo acceso.':'Puoi spegnerlo quando vuoi.';cl='on'}
+  else{t='Il PC è spento';sub='Ultimo segno di vita '+oreTxt(m)+' fa.'+(n?' Ha '+n+(n==1?' lavoro':' lavori')+' in attesa: accendilo quando puoi.':' Nessun lavoro in attesa: va bene così.')}
+  return '<div class="card"><div class="kick">💻 Il PC</div><div class="now" style="margin-top:6px"><span class="pulse"'+(cl?'':' style="background:#8a8f98;animation:none;box-shadow:none"')+'></span><div style="font-size:16px;font-weight:600">'+esc(t)+'</div></div><p class="meta" style="margin:6px 0 0">'+esc(sub)+'</p></div>'
+}
 function blocchiProgetto(st){
   const p=st.progetto||{},sez=[];
   const L=a=>(a||[]).filter(Boolean);
@@ -375,6 +383,7 @@ function vOggi(){
   h+='<div style="display:flex;justify-content:flex-end"><button class="ghost" data-act="ref">'+(S.busy?'Aggiorno…':(S.agg?fh(S.agg)+' · ':'')+'↻ Aggiorna')+'</button></div>';
   if(!st){main.innerHTML=h+'<div class="empty"><b>Ancora niente da mostrare</b>Il riepilogo compare dopo la prossima esecuzione del sistema.</div>'+agg();return}
   h+='<div class="card"><div class="kick">Ora</div><div class="now" style="margin-top:6px"><span class="pulse"></span><div style="font-size:17px;font-weight:600">'+esc(st.ora||'Nessuna attività in corso')+'</div></div></div>';
+  h+=cartaPC(st);
   if(st.progetto){h+=blocchiProgetto(st)}
   else{
   if(Array.isArray(st.coda)){const old=st.aggiornato&&ore(st.aggiornato)>90;
