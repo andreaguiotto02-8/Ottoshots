@@ -158,7 +158,7 @@ nav{background:color-mix(in srgb,var(--bg) 82%,transparent);-webkit-backdrop-fil
 <div id="lb"><img alt=""><button id="lbx" aria-label="Chiudi">✕</button><button id="lbp" aria-label="Precedente">‹</button><button id="lbn2" aria-label="Successiva">›</button><div id="lbc"></div></div>
 <script>
 'use strict';
-const APP_V='3.6';
+const APP_V='3.7';
 const DEF_REPO='andreaguiotto02-8/ottoshots-data';
 const VAPID_PUB='BM1nBAYKhFCtuM4cE0lH1PyN2sV2p02GPusQUmEjs_KvA0JsRN-mGOL9EXRD6S7nSKWOnksQUJGAGMSTXyOX7pQ';
 const $=s=>document.querySelector(s), main=$('#main');
@@ -250,7 +250,6 @@ function ore(t){const m=(Date.now()-new Date(t).getTime())/60000;return isNaN(m)
 function oreTxt(m){return m<90?Math.round(m)+' minuti':m<60*36?Math.round(m/60)+' ore':Math.round(m/1440)+' giorni'}
 function salute(){const st=S.stato,a=[];if(!st)return a;
   const c=st.cloud_ultimo_giro?ore(st.cloud_ultimo_giro):null;if(c!=null&&c>150)a.push('Il controllo automatico di Claude non si fa sentire da '+oreTxt(c)+'.');
-  const p=st.attesa_pc_da?ore(st.attesa_pc_da):null;if(p!=null&&p>180)a.push('Il PC non risponde da '+oreTxt(p)+'. Controlla che sia acceso e collegato.');
   if(st.sincronizzazione&&st.sincronizzazione.ok===false)a.push('Problema di sincronizzazione tra telefono e PC'+(st.sincronizzazione.nota?': '+st.sincronizzazione.nota:'.'));
   (st.problemi||[]).forEach(x=>a.push(x));return a}
 const banner=()=>{let h=S.err?'<div class="banner">'+esc(S.err)+'</div>':'';const sa=salute();if(sa.length)h+='<div class="banner" style="border-color:var(--bad);background:color-mix(in srgb,var(--bad) 14%,var(--surface))"><b style="color:var(--bad)">Attenzione</b><br>'+sa.map(esc).join('<br>')+'</div>';return h}
